@@ -579,37 +579,77 @@ async def generate_pdf_report(scan: Scan, vulnerabilities: List[Vulnerability]) 
     pdf = FPDF()
     pdf.set_auto_page_break(auto=True, margin=15)
     
-    # Windows 맑은 고딕 폰트 추가
-    font_path = "C:/Windows/Fonts/malgun.ttf"
-    font_bold_path = "C:/Windows/Fonts/malgunbd.ttf"
+    # 한글 폰트 경로 (Windows / Linux)
+    font_paths = [
+        "C:/Windows/Fonts/malgun.ttf",  # Windows
+        "/usr/share/fonts/truetype/nanum/NanumGothic.ttf",  # Linux (Ubuntu)
+        "/usr/share/fonts/nanum/NanumGothic.ttf",  # Linux (Other)
+    ]
+    font_bold_paths = [
+        "C:/Windows/Fonts/malgunbd.ttf",
+        "/usr/share/fonts/truetype/nanum/NanumGothicBold.ttf",
+        "/usr/share/fonts/nanum/NanumGothicBold.ttf",
+    ]
     
-    if os.path.exists(font_path):
-        pdf.add_font("Malgun", "", font_path)
-        if os.path.exists(font_bold_path):
-            pdf.add_font("Malgun", "B", font_bold_path)
-        else:
-            pdf.add_font("Malgun", "B", font_path)
-        font_name = "Malgun"
-    else:
-        # 폰트가 없으면 기본 폰트 사용
-        font_name = "Helvetica"
+    font_name = "Helvetica"  # 기본값
+    use_korean = False
+    
+    for font_path in font_paths:
+        if os.path.exists(font_path):
+            pdf.add_font("Korean", "", font_path)
+            # Bold 폰트도 찾기
+            for bold_path in font_bold_paths:
+                if os.path.exists(bold_path):
+                    pdf.add_font("Korean", "B", bold_path)
+                    break
+            else:
+                pdf.add_font("Korean", "B", font_path)
+            font_name = "Korean"
+            use_korean = True
+            break
     
     pdf.add_page()
+    
+    # 텍스트 선택 (한글 폰트 있으면 한글, 없으면 영어)
+    if use_korean:
+        txt_title = 'SecureScan 보안 보고서'
+        txt_subtitle = '웹 취약점 분석 보고서'
+        txt_scan_summary = '스캔 요약'
+        txt_target_url = '대상 URL:'
+        txt_domain = '도메인:'
+        txt_scan_type = '스캔 유형:'
+        txt_status = '상태:'
+        txt_depth = '깊이'
+        txt_vuln_stats = '취약점 통계'
+        status_map = {'completed': '완료', 'running': '진행 중', 'pending': '대기 중', 'failed': '실패'}
+        stats_labels = ['심각 (Critical)', '높음 (High)', '중간 (Medium)', '낮음 (Low)', '정보 (Info)']
+    else:
+        txt_title = 'SecureScan Security Report'
+        txt_subtitle = 'Web Vulnerability Assessment Report'
+        txt_scan_summary = 'Scan Summary'
+        txt_target_url = 'Target URL:'
+        txt_domain = 'Domain:'
+        txt_scan_type = 'Scan Type:'
+        txt_status = 'Status:'
+        txt_depth = 'depth'
+        txt_vuln_stats = 'Vulnerability Statistics'
+        status_map = {'completed': 'Completed', 'running': 'Running', 'pending': 'Pending', 'failed': 'Failed'}
+        stats_labels = ['Critical', 'High', 'Medium', 'Low', 'Info']
     
     # 헤더
     pdf.set_font(font_name, 'B', 22)
     pdf.set_text_color(0, 212, 170)
-    pdf.cell(0, 15, 'SecureScan 보안 보고서', align='C', new_x='LMARGIN', new_y='NEXT')
+    pdf.cell(0, 15, txt_title, align='C', new_x='LMARGIN', new_y='NEXT')
     pdf.set_font(font_name, '', 11)
     pdf.set_text_color(128, 128, 128)
-    pdf.cell(0, 8, '웹 취약점 분석 보고서', align='C', new_x='LMARGIN', new_y='NEXT')
+    pdf.cell(0, 8, txt_subtitle, align='C', new_x='LMARGIN', new_y='NEXT')
     pdf.ln(10)
     
     # 스캔 요약
     pdf.set_font(font_name, 'B', 14)
     pdf.set_text_color(255, 255, 255)
     pdf.set_fill_color(30, 30, 46)
-    pdf.cell(0, 12, '스캔 요약', fill=True, new_x='LMARGIN', new_y='NEXT')
+    pdf.cell(0, 12, txt_scan_summary, fill=True, new_x='LMARGIN', new_y='NEXT')
     pdf.ln(5)
     
     # 안전하게 값 변환
@@ -617,25 +657,17 @@ async def generate_pdf_report(scan: Scan, vulnerabilities: List[Vulnerability]) 
     target_domain = str(scan.target_domain) if scan.target_domain else "N/A"
     scan_type = str(scan.scan_type) if scan.scan_type else "N/A"
     scan_status = scan.status.value if hasattr(scan.status, 'value') else str(scan.status)
-    
-    # 상태 한글 변환
-    status_korean = {
-        'completed': '완료',
-        'running': '진행 중',
-        'pending': '대기 중',
-        'failed': '실패',
-    }
-    scan_status_display = status_korean.get(scan_status, scan_status)
+    scan_status_display = status_map.get(scan_status, scan_status)
     
     pdf.set_font(font_name, '', 11)
     pdf.set_text_color(50, 50, 50)
-    pdf.cell(50, 8, '대상 URL:', new_x='RIGHT')
+    pdf.cell(50, 8, txt_target_url, new_x='RIGHT')
     pdf.cell(0, 8, target_url, new_x='LMARGIN', new_y='NEXT')
-    pdf.cell(50, 8, '도메인:', new_x='RIGHT')
+    pdf.cell(50, 8, txt_domain, new_x='RIGHT')
     pdf.cell(0, 8, target_domain, new_x='LMARGIN', new_y='NEXT')
-    pdf.cell(50, 8, '스캔 유형:', new_x='RIGHT')
-    pdf.cell(0, 8, f'{scan_type} (깊이: {scan.scan_depth})', new_x='LMARGIN', new_y='NEXT')
-    pdf.cell(50, 8, '상태:', new_x='RIGHT')
+    pdf.cell(50, 8, txt_scan_type, new_x='RIGHT')
+    pdf.cell(0, 8, f'{scan_type} ({txt_depth}: {scan.scan_depth})', new_x='LMARGIN', new_y='NEXT')
+    pdf.cell(50, 8, txt_status, new_x='RIGHT')
     pdf.cell(0, 8, scan_status_display, new_x='LMARGIN', new_y='NEXT')
     pdf.ln(10)
     
@@ -643,15 +675,15 @@ async def generate_pdf_report(scan: Scan, vulnerabilities: List[Vulnerability]) 
     pdf.set_font(font_name, 'B', 14)
     pdf.set_text_color(255, 255, 255)
     pdf.set_fill_color(30, 30, 46)
-    pdf.cell(0, 12, '취약점 통계', fill=True, new_x='LMARGIN', new_y='NEXT')
+    pdf.cell(0, 12, txt_vuln_stats, fill=True, new_x='LMARGIN', new_y='NEXT')
     pdf.ln(5)
     
     stats = [
-        ('심각 (Critical)', scan.critical_count, severity_colors['critical']),
-        ('높음 (High)', scan.high_count, severity_colors['high']),
-        ('중간 (Medium)', scan.medium_count, severity_colors['medium']),
-        ('낮음 (Low)', scan.low_count, severity_colors['low']),
-        ('정보 (Info)', scan.info_count, severity_colors['info']),
+        (stats_labels[0], scan.critical_count, severity_colors['critical']),
+        (stats_labels[1], scan.high_count, severity_colors['high']),
+        (stats_labels[2], scan.medium_count, severity_colors['medium']),
+        (stats_labels[3], scan.low_count, severity_colors['low']),
+        (stats_labels[4], scan.info_count, severity_colors['info']),
     ]
     
     pdf.set_font(font_name, 'B', 11)
@@ -663,15 +695,36 @@ async def generate_pdf_report(scan: Scan, vulnerabilities: List[Vulnerability]) 
     pdf.ln(5)
     pdf.set_text_color(50, 50, 50)
     pdf.set_font(font_name, 'B', 12)
-    pdf.cell(0, 10, f'총 취약점 수: {scan.total_vulnerabilities}', new_x='LMARGIN', new_y='NEXT')
+    txt_total = '총 취약점 수' if use_korean else 'Total Vulnerabilities'
+    pdf.cell(0, 10, f'{txt_total}: {scan.total_vulnerabilities}', new_x='LMARGIN', new_y='NEXT')
     pdf.ln(10)
+    
+    # 텍스트 설정
+    if use_korean:
+        txt_vuln_detail = '취약점 상세 정보'
+        txt_unknown = '알 수 없음'
+        txt_no_desc = '설명 없음'
+        txt_desc = '설명'
+        txt_recommendation = '권장 조치'
+        txt_reference = '참조'
+        txt_generated = '보고서 생성일'
+        txt_scanner = 'SecureScan - 웹 보안 스캐너'
+    else:
+        txt_vuln_detail = 'Vulnerability Details'
+        txt_unknown = 'Unknown'
+        txt_no_desc = 'No description'
+        txt_desc = 'Description'
+        txt_recommendation = 'Recommendation'
+        txt_reference = 'Reference'
+        txt_generated = 'Report Generated'
+        txt_scanner = 'SecureScan - Web Security Scanner'
     
     # 취약점 상세
     if vulnerabilities:
         pdf.set_font(font_name, 'B', 14)
         pdf.set_text_color(255, 255, 255)
         pdf.set_fill_color(30, 30, 46)
-        pdf.cell(0, 12, '취약점 상세 정보', fill=True, new_x='LMARGIN', new_y='NEXT')
+        pdf.cell(0, 12, txt_vuln_detail, fill=True, new_x='LMARGIN', new_y='NEXT')
         pdf.ln(5)
         
         for i, vuln in enumerate(vulnerabilities, 1):
@@ -682,17 +735,21 @@ async def generate_pdf_report(scan: Scan, vulnerabilities: List[Vulnerability]) 
             # 안전하게 severity 값 추출
             severity = vuln.severity.value if hasattr(vuln.severity, 'value') else str(vuln.severity)
             color = severity_colors.get(severity, (128, 128, 128))
-            severity_kr = severity_korean.get(severity, severity)
+            severity_display = severity_korean.get(severity, severity) if use_korean else severity.upper()
             
-            # 안전하게 값 변환 (한글 유지)
-            vuln_name = str(vuln.name) if vuln.name else "알 수 없음"
+            # 안전하게 값 변환
+            vuln_name = str(vuln.name) if vuln.name else txt_unknown
+            if not use_korean:
+                vuln_name = sanitize_text_for_pdf(vuln_name)
             affected_url = str(vuln.affected_url) if vuln.affected_url else "N/A"
-            description = str(vuln.description) if vuln.description else "설명 없음"
+            description = str(vuln.description) if vuln.description else txt_no_desc
+            if not use_korean:
+                description = sanitize_text_for_pdf(description)
             
             # 취약점 제목
             pdf.set_font(font_name, 'B', 11)
             pdf.set_text_color(*color)
-            pdf.cell(0, 8, f'{i}. [{severity_kr}] {vuln_name}', new_x='LMARGIN', new_y='NEXT')
+            pdf.cell(0, 8, f'{i}. [{severity_display}] {vuln_name}', new_x='LMARGIN', new_y='NEXT')
             
             # URL
             pdf.set_font(font_name, '', 9)
@@ -705,25 +762,27 @@ async def generate_pdf_report(scan: Scan, vulnerabilities: List[Vulnerability]) 
             pdf.set_font(font_name, '', 10)
             desc_display = description[:300] + '...' if len(description) > 300 else description
             if desc_display.strip():
-                pdf.set_x(10)  # X 위치 리셋
-                pdf.multi_cell(190, 5, f'설명: {desc_display}')
+                pdf.set_x(10)
+                pdf.multi_cell(190, 5, f'{txt_desc}: {desc_display}')
             
             # 권장 조치
             if vuln.recommendation:
                 recommendation = str(vuln.recommendation)[:200]
+                if not use_korean:
+                    recommendation = sanitize_text_for_pdf(recommendation)
                 if recommendation.strip():
                     pdf.set_text_color(46, 213, 115)
                     pdf.set_font(font_name, '', 9)
                     if len(str(vuln.recommendation)) > 200:
                         recommendation += '...'
-                    pdf.set_x(10)  # X 위치 리셋
-                    pdf.multi_cell(190, 5, f'권장 조치: {recommendation}')
+                    pdf.set_x(10)
+                    pdf.multi_cell(190, 5, f'{txt_recommendation}: {recommendation}')
             
             # CWE
             if vuln.cwe_id:
                 pdf.set_text_color(128, 128, 128)
                 pdf.set_font(font_name, '', 9)
-                pdf.cell(0, 5, f'참조: {vuln.cwe_id}', new_x='LMARGIN', new_y='NEXT')
+                pdf.cell(0, 5, f'{txt_reference}: {vuln.cwe_id}', new_x='LMARGIN', new_y='NEXT')
             
             pdf.ln(5)
     
@@ -731,8 +790,8 @@ async def generate_pdf_report(scan: Scan, vulnerabilities: List[Vulnerability]) 
     pdf.ln(10)
     pdf.set_font(font_name, '', 9)
     pdf.set_text_color(128, 128, 128)
-    pdf.cell(0, 5, f'보고서 생성일: {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}', align='C', new_x='LMARGIN', new_y='NEXT')
-    pdf.cell(0, 5, 'SecureScan - 웹 보안 스캐너', align='C')
+    pdf.cell(0, 5, f'{txt_generated}: {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")}', align='C', new_x='LMARGIN', new_y='NEXT')
+    pdf.cell(0, 5, txt_scanner, align='C')
     
     # PDF 출력
     pdf_buffer = io.BytesIO()
