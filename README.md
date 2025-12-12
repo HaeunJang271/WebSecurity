@@ -237,14 +237,13 @@ SecureScan/
 
 ## 📄 라이선스
 
-MIT License - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
+이 프로젝트는 개인 프로젝트입니다.
 
 ---
 
 ## 📞 문의
 
-- **이메일**: support@securescan.io
-- **이슈**: [GitHub Issues](https://github.com/your-username/securescan/issues)
+- **이메일**: haeunjang271@gmail.com
 
 ---
 
@@ -253,7 +252,7 @@ MIT License - 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요.
 **"보안은 제품이 아니라 과정입니다. 끊임없이 진화하는 위협에 대응해야 합니다."**
 *- 케빈 미트닉*
 
-Made with ❤️ by SecureScan Team
+Made with ❤️
 
 </div>
 
