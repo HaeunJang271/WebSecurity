@@ -45,7 +45,7 @@ class Settings(BaseSettings):
         default=[
             "http://localhost:3000", 
             "http://localhost:5173",
-            "https://*.vercel.app",  # Vercel 배포 도메인
+            "https://securescan-ten.vercel.app",  # Vercel 배포 도메인
         ],
         alias="CORS_ORIGINS"
     )
