@@ -1,0 +1,28 @@
+# FastAPI & Web Framework
+fastapi
+uvicorn
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Database (SQLite)
+sqlalchemy
+aiosqlite
+
+# HTTP Client
+aiohttp
+httpx
+requests
+
+# HTML Parsing
+beautifulsoup4
+
+# Template & Report
+jinja2
+fpdf2
+
+# Validation
+pydantic
+pydantic-settings
+email-validator
+python-dotenv
