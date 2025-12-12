@@ -8,8 +8,7 @@ import {
   ArrowRight,
   CheckCircle,
   Globe,
-  Lock,
-  BarChart3
+  Lock
 } from 'lucide-react'
 
 const features = [

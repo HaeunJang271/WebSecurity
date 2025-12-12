@@ -32,8 +32,9 @@ export default function ScanDetail() {
   const { data: scan, isLoading: scanLoading, refetch } = useQuery({
     queryKey: ['scan', scanId],
     queryFn: () => scanAPI.get(scanId),
-    refetchInterval: (data) => {
-      if (data?.status === 'running' || data?.status === 'pending') {
+    refetchInterval: (query) => {
+      const scanData = query.state.data as any
+      if (scanData?.status === 'running' || scanData?.status === 'pending') {
         return 3000
       }
       return false
