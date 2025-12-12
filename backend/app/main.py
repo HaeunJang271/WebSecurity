@@ -116,10 +116,16 @@ app = FastAPI(
 )
 
 # CORS middleware
+# CORS 설정 - 배포 환경에서는 모든 origin 허용
+cors_origins = settings.cors_origins
+if not settings.debug:
+    # 프로덕션에서는 모든 origin 허용 (또는 특정 도메인만 설정)
+    cors_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
-    allow_credentials=True,
+    allow_origins=cors_origins,
+    allow_credentials=True if settings.debug else False,  # * 사용 시 credentials=False
     allow_methods=["*"],
     allow_headers=["*"],
 )

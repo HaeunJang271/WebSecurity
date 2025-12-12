@@ -40,9 +40,13 @@ class Settings(BaseSettings):
     zap_proxy_host: str = Field(default="localhost", alias="ZAP_PROXY_HOST")
     zap_proxy_port: int = Field(default=8080, alias="ZAP_PROXY_PORT")
     
-    # CORS
+    # CORS (배포 시 프론트엔드 도메인 추가 필요)
     cors_origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:5173"],
+        default=[
+            "http://localhost:3000", 
+            "http://localhost:5173",
+            "https://*.vercel.app",  # Vercel 배포 도메인
+        ],
         alias="CORS_ORIGINS"
     )
     

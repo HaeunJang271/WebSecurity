@@ -1,7 +1,8 @@
 import axios from 'axios'
 import { useAuthStore } from '../stores/authStore'
 
-const API_BASE_URL = '/api/v1'
+// 환경변수에서 API URL 가져오기 (배포 시 설정 필요)
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1'
 
 // Create axios instance
 export const api = axios.create({
