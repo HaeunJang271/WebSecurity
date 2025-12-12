@@ -180,6 +180,7 @@ app.include_router(api_router, prefix="/api/v1")
 
 # Health check endpoint
 @app.get("/health", tags=["상태"])
+@app.head("/health", tags=["상태"])
 async def health_check():
     """서버 상태 확인"""
     return {
@@ -189,8 +190,17 @@ async def health_check():
     }
 
 
+# Render 헬스체크용
+@app.get("/healthz", tags=["상태"])
+@app.head("/healthz", tags=["상태"])
+async def healthz():
+    """Render 헬스체크 엔드포인트"""
+    return {"status": "ok"}
+
+
 # Root endpoint
 @app.get("/", tags=["상태"])
+@app.head("/", tags=["상태"])
 async def root():
     """API 루트"""
     return {
