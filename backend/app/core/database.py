@@ -7,11 +7,32 @@ from sqlalchemy.orm import declarative_base
 
 from app.core.config import settings
 
-# Create async engine (aiosqlite handles threading internally)
+
+def get_async_database_url(url: str) -> str:
+    """
+    Convert database URL to async-compatible URL
+    - postgresql:// → postgresql+asyncpg://
+    - sqlite:// → sqlite+aiosqlite://
+    """
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("sqlite://"):
+        return url.replace("sqlite://", "sqlite+aiosqlite://", 1)
+    return url
+
+
+# Get async-compatible database URL
+database_url = get_async_database_url(settings.database_url)
+print(f"📦 Database URL: {database_url[:50]}...")  # 디버그용 (일부만 표시)
+
+# Create async engine
 engine = create_async_engine(
-    settings.database_url,
+    database_url,
     echo=settings.database_echo,
     future=True,
+    pool_pre_ping=True,  # PostgreSQL 연결 확인
 )
 
 # Create async session factory

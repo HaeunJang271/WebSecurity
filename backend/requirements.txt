@@ -5,9 +5,11 @@ python-multipart
 python-jose[cryptography]
 passlib[bcrypt]
 
-# Database (SQLite)
+# Database (SQLite + PostgreSQL)
 sqlalchemy
 aiosqlite
+asyncpg
+psycopg2-binary
 
 # HTTP Client
 aiohttp
